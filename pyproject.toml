@@ -6,6 +6,7 @@ authors = [
     {name = "Wendel", email = "delldev7@gmail.com"}
 ]
 readme = "README.md"
+dynamic = ["dependencies", "requires-python"]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -19,15 +20,27 @@ httpx = "^0.28.1"
 sqlalchemy = ">=1.4.28,<2.0"
 psycopg2-binary = ">=2.9.10"
 
-
-[tool.poetry.dev-dependencies]
-pytest = "^7.4"
-black = "^24.3"
-isort = "^6.0"
-mypy = "^1.5"
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.4,<8.0"
+ruff = ">=0.6.0"
+mypy = ">=1.5,<2.0"
 
 [tool.poetry]
 package-mode = false
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

@@ -16,6 +16,12 @@ airflow/tmp/
 dbt/logs/
 dbt/target/
 
+# --- DATA / ARTEFATOS LOCAIS ---
+data/
+logs/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # --- DOCKER ---
 *.pid
@@ -27,5 +33,4 @@ dbt/target/
 Thumbs.db
 
 # --- PYTHON/POETRY ---
-poetry.lock
-# (opcional subir, mas mantenha se quiser travar dependências)
+# poetry.lock deve ser versionado quando for gerado para travar dependências.
