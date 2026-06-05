@@ -1,4 +1,4 @@
-from pipeline_dados.config import get_settings
+from config import get_settings
 
 
 def test_get_settings_has_safe_defaults(monkeypatch):
@@ -13,4 +13,3 @@ def test_get_settings_has_safe_defaults(monkeypatch):
     assert settings.api_key is None
     assert settings.request_timeout == 10
     assert settings.coin_top_n == 20
-

@@ -3,7 +3,7 @@ from typing import Any
 
 import pandas as pd
 
-from pipeline_dados.logging import get_logger
+from logger import get_logger
 
 logger = get_logger("parquet")
 
@@ -27,4 +27,3 @@ def save_parquet(data: Any, path: str | Path) -> Path:
     logger.info("Parquet saved at %s", output_path)
 
     return output_path
-

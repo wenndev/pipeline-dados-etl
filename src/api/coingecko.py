@@ -4,8 +4,8 @@ from typing import Any
 
 import requests
 
-from pipeline_dados.config import Settings, get_settings
-from pipeline_dados.logging import get_logger
+from config import Settings, get_settings
+from logger import get_logger
 
 logger = get_logger("coingecko")
 

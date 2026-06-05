@@ -1,6 +1,6 @@
 import pandas as pd
 
-from pipeline_dados.storage.parquet import save_parquet
+from storage.parquet import save_parquet
 
 
 def test_save_parquet_creates_file(tmp_path):

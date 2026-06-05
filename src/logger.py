@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from pipeline_dados.config import get_settings
+from config import get_settings
 
 
 def get_logger(name: str = "pipeline") -> logging.Logger:
