@@ -6,6 +6,7 @@ def test_obter_configuracoes_tem_valores_padrao_seguros(monkeypatch):
     monkeypatch.delenv("API_KEY", raising=False)
     monkeypatch.delenv("REQUEST_TIMEOUT", raising=False)
     monkeypatch.delenv("COIN_TOP_N", raising=False)
+    monkeypatch.delenv("TIMEZONE", raising=False)
 
     configuracoes = obter_configuracoes()
 
@@ -14,3 +15,4 @@ def test_obter_configuracoes_tem_valores_padrao_seguros(monkeypatch):
     assert configuracoes.request_timeout == 10
     assert configuracoes.coin_top_n == 20
     assert configuracoes.database_url is None
+    assert configuracoes.timezone == "America/Sao_Paulo"

@@ -1,12 +1,14 @@
 """Extrai dados atuais de mercado da CoinGecko para a camada Bronze."""
 
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from api.coingecko import ClienteCoinGecko
 from config import Configuracoes, obter_configuracoes
 from logger import obter_logger
+from quality.markets import validar_mercados
 from storage.parquet import salvar_parquet
 
 logger = obter_logger("mercados")
@@ -27,7 +29,9 @@ def montar_caminho_saida_mercados(
     configuracoes: Configuracoes,
     data_execucao: datetime | None = None,
 ) -> Path:
-    data_atual = data_execucao or datetime.now(UTC)
+    fuso_horario = ZoneInfo(configuracoes.timezone)
+    data_atual = data_execucao or datetime.now(fuso_horario)
+    data_atual = data_atual.astimezone(fuso_horario)
     particao_data = data_atual.strftime("%Y-%m-%d")
 
     return (
@@ -64,6 +68,7 @@ def executar_ingestao_mercados(
 ) -> Path:
     configuracoes = configuracoes or obter_configuracoes()
     dados = extrair_mercados(cliente=cliente, configuracoes=configuracoes)
+    validar_mercados(dados, limite_esperado=configuracoes.coin_top_n)
     caminho_saida = montar_caminho_saida_mercados(
         configuracoes,
         data_execucao=data_execucao,

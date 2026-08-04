@@ -24,6 +24,7 @@ class Configuracoes:
     data_dir: Path
     log_dir: Path
     database_url: str | None
+    timezone: str
 
 
 def obter_configuracoes() -> Configuracoes:
@@ -35,4 +36,5 @@ def obter_configuracoes() -> Configuracoes:
         data_dir=Path(os.getenv("DATA_DIR", "data")),
         log_dir=Path(os.getenv("LOG_DIR", "logs")),
         database_url=os.getenv("DATABASE_URL") or None,
+        timezone=os.getenv("TIMEZONE", "America/Sao_Paulo"),
     )
