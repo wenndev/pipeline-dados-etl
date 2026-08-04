@@ -1,26 +1,38 @@
+"""
+Esse arquivo concentra a comunicação com a API da CoinGecko.
+
+A classe ClienteCoinGecko monta a URL final, envia requisições GET,
+passa parâmetros de consulta, aplica timeout e tenta novamente quando
+acontecem falhas temporárias, como rate limit ou erro de servidor.
+
+Ter esse código isolado evita espalhar chamadas HTTP pelo projeto. Assim,
+os arquivos de ingestão só precisam pedir os dados, sem conhecer detalhes
+de retry, headers, timeout ou tratamento de erro.
+"""
+
 import random
 import time
 from typing import Any
 
 import requests
 
-from config import Settings, get_settings
-from logger import get_logger
+from config import Configuracoes, obter_configuracoes
+from logger import obter_logger
 
-logger = get_logger("coingecko")
-
-
-class CoinGeckoClientError(RuntimeError):
-    """Raised when the CoinGecko client cannot return a successful response."""
+logger = obter_logger("coingecko")
 
 
-class CoinGeckoClient:
+class ErroClienteCoinGecko(RuntimeError):
+    """Erro disparado quando o cliente da CoinGecko não consegue retornar sucesso."""
+
+
+class ClienteCoinGecko:
     def __init__(
         self,
-        settings: Settings | None = None,
+        configuracoes: Configuracoes | None = None,
         session: requests.Session | None = None,
     ) -> None:
-        self.settings = settings or get_settings()
+        self.configuracoes = configuracoes or obter_configuracoes()
         self.session = session or requests.Session()
 
     def get(
@@ -29,7 +41,7 @@ class CoinGeckoClient:
         params: dict[str, Any] | None = None,
         retries: int = 3,
     ) -> Any:
-        url = f"{self.settings.api_url}/{endpoint.lstrip('/')}"
+        url = f"{self.configuracoes.api_url}/{endpoint.lstrip('/')}"
         headers = self._headers()
 
         for attempt in range(1, retries + 1):
@@ -39,14 +51,14 @@ class CoinGeckoClient:
                     url,
                     params=params,
                     headers=headers,
-                    timeout=self.settings.request_timeout,
+                    timeout=self.configuracoes.request_timeout,
                 )
 
                 if response.status_code == 200:
                     return response.json()
 
                 if response.status_code not in {429, 500, 502, 503, 504}:
-                    raise CoinGeckoClientError(
+                    raise ErroClienteCoinGecko(
                         f"CoinGecko returned {response.status_code}: {response.text}"
                     )
 
@@ -55,18 +67,18 @@ class CoinGeckoClient:
 
             except requests.RequestException as exc:
                 if attempt == retries:
-                    raise CoinGeckoClientError("CoinGecko request failed") from exc
+                    raise ErroClienteCoinGecko("CoinGecko request failed") from exc
 
                 logger.warning("Connection error: %s", exc)
                 self._sleep_before_retry(None, attempt)
 
-        raise CoinGeckoClientError(f"Failed to fetch {endpoint} after {retries} retries")
+        raise ErroClienteCoinGecko(f"Failed to fetch {endpoint} after {retries} retries")
 
     def _headers(self) -> dict[str, str]:
-        if not self.settings.api_key:
+        if not self.configuracoes.api_key:
             return {}
 
-        return {"x-cg-demo-api-key": self.settings.api_key}
+        return {"x-cg-demo-api-key": self.configuracoes.api_key}
 
     def _sleep_before_retry(
         self,
@@ -84,4 +96,3 @@ class CoinGeckoClient:
 
         logger.info("Waiting %.2fs before retry", sleep_time)
         time.sleep(sleep_time)
-

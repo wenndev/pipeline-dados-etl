@@ -1,2 +1,1 @@
-"""Coin history ingestion will be implemented in a later step."""
-
+"""A ingestão de histórico das moedas será implementada em uma etapa futura."""

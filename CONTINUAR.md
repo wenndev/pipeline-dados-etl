@@ -127,10 +127,10 @@ Resultado esperado:
 
 ```text
 ruff: ok
-pytest: 3 passed
+pytest: 8 passed
 ```
 
-O proximo passo tecnico e implementar a primeira extracao real:
+O proximo passo tecnico e testar a primeira extracao real:
 
 ```text
 src/ingestion/markets.py
@@ -322,4 +322,3 @@ Entao abra este arquivo:
 ```text
 CONTINUAR.md
 ```
-

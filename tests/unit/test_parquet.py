@@ -1,13 +1,13 @@
 import pandas as pd
 
-from storage.parquet import save_parquet
+from storage.parquet import salvar_parquet
 
 
-def test_save_parquet_creates_file(tmp_path):
-    output_path = save_parquet([{"coin": "bitcoin", "price": 1}], tmp_path / "markets")
+def test_salvar_parquet_cria_arquivo(tmp_path):
+    caminho_saida = salvar_parquet([{"coin": "bitcoin", "price": 1}], tmp_path / "markets")
 
-    assert output_path.name == "markets.parquet"
-    assert output_path.exists()
+    assert caminho_saida.name == "markets.parquet"
+    assert caminho_saida.exists()
 
-    dataframe = pd.read_parquet(output_path)
+    dataframe = pd.read_parquet(caminho_saida)
     assert dataframe.to_dict(orient="records") == [{"coin": "bitcoin", "price": 1}]
