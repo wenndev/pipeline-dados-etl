@@ -8,6 +8,7 @@ def test_salvar_parquet_cria_arquivo(tmp_path):
 
     assert caminho_saida.name == "markets.parquet"
     assert caminho_saida.exists()
+    assert list(tmp_path.glob("*.tmp.parquet")) == []
 
     dataframe = pd.read_parquet(caminho_saida)
     assert dataframe.to_dict(orient="records") == [{"coin": "bitcoin", "price": 1}]

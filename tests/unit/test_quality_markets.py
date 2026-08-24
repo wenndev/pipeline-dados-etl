@@ -1,6 +1,12 @@
+import pandas as pd
 import pytest
 
-from quality.markets import ErroQualidadeDados, validar_mercados
+from quality.markets import (
+    ErroQualidadeDados,
+    validar_arquivo_mercados_bronze,
+    validar_dataframe_mercados,
+    validar_mercados,
+)
 
 
 def mercado_valido():
@@ -53,3 +59,41 @@ def test_validar_mercados_rejeita_valor_numerico_negativo():
 
     with pytest.raises(ErroQualidadeDados, match="negativo"):
         validar_mercados([registro], limite_esperado=20)
+
+
+def test_validar_dataframe_mercados_aceita_dataframe_valido():
+    dataframe = pd.DataFrame([mercado_valido()])
+
+    validar_dataframe_mercados(dataframe, limite_esperado=20)
+
+
+def test_validar_dataframe_mercados_rejeita_coluna_ausente():
+    dataframe = pd.DataFrame([mercado_valido()]).drop(columns=["current_price"])
+
+    with pytest.raises(ErroQualidadeDados, match="colunas obrigatórias"):
+        validar_dataframe_mercados(dataframe, limite_esperado=20)
+
+
+def test_validar_dataframe_mercados_rejeita_id_duplicado():
+    dataframe = pd.DataFrame([mercado_valido(), mercado_valido()])
+
+    with pytest.raises(ErroQualidadeDados, match="duplicadas por id"):
+        validar_dataframe_mercados(dataframe, limite_esperado=20)
+
+
+def test_validar_dataframe_mercados_rejeita_texto_vazio():
+    registro = mercado_valido()
+    registro["symbol"] = " "
+    dataframe = pd.DataFrame([registro])
+
+    with pytest.raises(ErroQualidadeDados, match="symbol vazio"):
+        validar_dataframe_mercados(dataframe, limite_esperado=20)
+
+
+def test_validar_arquivo_mercados_bronze_retorna_total_registros(tmp_path):
+    caminho = tmp_path / "mercados_2026-08-03.parquet"
+    pd.DataFrame([mercado_valido()]).to_parquet(caminho, index=False)
+
+    total_registros = validar_arquivo_mercados_bronze(caminho, limite_esperado=20)
+
+    assert total_registros == 1

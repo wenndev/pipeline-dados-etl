@@ -12,6 +12,7 @@ das colunas para leituras futuras.
 
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import pandas as pd
 
@@ -35,7 +36,17 @@ def salvar_parquet(dados: Any, caminho: str | Path) -> Path:
     else:
         dataframe = pd.DataFrame(dados)
 
-    dataframe.to_parquet(caminho_saida, index=False)
+    caminho_temporario = caminho_saida.with_name(
+        f".{caminho_saida.stem}.{uuid4().hex}.tmp.parquet"
+    )
+
+    try:
+        dataframe.to_parquet(caminho_temporario, index=False)
+        caminho_temporario.replace(caminho_saida)
+    finally:
+        if caminho_temporario.exists():
+            caminho_temporario.unlink()
+
     logger.info("Parquet salvo em %s", caminho_saida)
 
     return caminho_saida

@@ -6,6 +6,7 @@ import pytest
 
 from config import Configuracoes
 from ingestion.markets import (
+    adicionar_metadados_mercados,
     executar_ingestao_mercados,
     extrair_mercados,
     montar_caminho_saida_mercados,
@@ -104,6 +105,25 @@ def test_extrair_mercados_rejeita_resposta_inesperada(tmp_path):
         extrair_mercados(cliente=cliente, configuracoes=configuracoes)
 
 
+def test_adicionar_metadados_mercados_preserva_dados_originais(tmp_path):
+    configuracoes = criar_configuracoes(tmp_path)
+    dados = [{"id": "bitcoin"}]
+    data_execucao = datetime(2026, 8, 4, 2, 0, tzinfo=UTC)
+
+    resultado = adicionar_metadados_mercados(
+        dados,
+        configuracoes=configuracoes,
+        data_execucao=data_execucao,
+    )
+
+    assert dados == [{"id": "bitcoin"}]
+    assert resultado[0]["id"] == "bitcoin"
+    assert resultado[0]["source"] == "coingecko"
+    assert resultado[0]["endpoint"] == "/coins/markets"
+    assert resultado[0]["processing_date"] == "2026-08-03"
+    assert "ingestion_timestamp" in resultado[0]
+
+
 def test_executar_ingestao_mercados_salva_parquet(tmp_path):
     configuracoes = criar_configuracoes(tmp_path)
     cliente = ClienteCoinGeckoFalso(
@@ -130,14 +150,16 @@ def test_executar_ingestao_mercados_salva_parquet(tmp_path):
     assert caminho_saida.exists()
 
     dataframe = pd.read_parquet(caminho_saida)
-    assert dataframe.to_dict(orient="records") == [
-        {
-            "id": "bitcoin",
-            "symbol": "btc",
-            "name": "Bitcoin",
-            "current_price": 100,
-            "market_cap": 1000,
-            "market_cap_rank": 1,
-            "total_volume": 500,
-        }
-    ]
+    registro = dataframe.to_dict(orient="records")[0]
+
+    assert registro["id"] == "bitcoin"
+    assert registro["symbol"] == "btc"
+    assert registro["name"] == "Bitcoin"
+    assert registro["current_price"] == 100
+    assert registro["market_cap"] == 1000
+    assert registro["market_cap_rank"] == 1
+    assert registro["total_volume"] == 500
+    assert registro["source"] == "coingecko"
+    assert registro["endpoint"] == "/coins/markets"
+    assert registro["processing_date"] == "2026-07-27"
+    assert "ingestion_timestamp" in registro

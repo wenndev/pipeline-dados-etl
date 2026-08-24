@@ -55,7 +55,12 @@ class ClienteCoinGecko:
                 )
 
                 if response.status_code == 200:
-                    return response.json()
+                    try:
+                        return response.json()
+                    except ValueError as exc:
+                        raise ErroClienteCoinGecko(
+                            "CoinGecko returned invalid JSON"
+                        ) from exc
 
                 if response.status_code not in {429, 500, 502, 503, 504}:
                     raise ErroClienteCoinGecko(

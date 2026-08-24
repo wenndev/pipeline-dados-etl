@@ -1,6 +1,6 @@
 """Extrai dados atuais de mercado da CoinGecko para a camada Bronze."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -12,6 +12,9 @@ from quality.markets import validar_mercados
 from storage.parquet import salvar_parquet
 
 logger = obter_logger("mercados")
+
+ENDPOINT_MERCADOS = "/coins/markets"
+FONTE_MERCADOS = "coingecko"
 
 
 def montar_parametros_mercados(configuracoes: Configuracoes) -> dict[str, Any]:
@@ -51,7 +54,7 @@ def extrair_mercados(
     cliente = cliente or ClienteCoinGecko(configuracoes=configuracoes)
 
     dados = cliente.get(
-        "/coins/markets",
+        ENDPOINT_MERCADOS,
         params=montar_parametros_mercados(configuracoes),
     )
 
@@ -59,6 +62,28 @@ def extrair_mercados(
         raise TypeError("A resposta de mercados da CoinGecko deve ser uma lista")
 
     return dados
+
+
+def adicionar_metadados_mercados(
+    dados: list[dict[str, Any]],
+    configuracoes: Configuracoes,
+    data_execucao: datetime | None = None,
+) -> list[dict[str, Any]]:
+    fuso_horario = ZoneInfo(configuracoes.timezone)
+    data_atual = data_execucao or datetime.now(fuso_horario)
+    data_processamento = data_atual.astimezone(fuso_horario).date().isoformat()
+    ingestion_timestamp = datetime.now(UTC).isoformat()
+
+    return [
+        {
+            **registro,
+            "source": FONTE_MERCADOS,
+            "endpoint": ENDPOINT_MERCADOS,
+            "processing_date": data_processamento,
+            "ingestion_timestamp": ingestion_timestamp,
+        }
+        for registro in dados
+    ]
 
 
 def executar_ingestao_mercados(
@@ -69,10 +94,20 @@ def executar_ingestao_mercados(
     configuracoes = configuracoes or obter_configuracoes()
     dados = extrair_mercados(cliente=cliente, configuracoes=configuracoes)
     validar_mercados(dados, limite_esperado=configuracoes.coin_top_n)
+    dados_com_metadados = adicionar_metadados_mercados(
+        dados,
+        configuracoes=configuracoes,
+        data_execucao=data_execucao,
+    )
     caminho_saida = montar_caminho_saida_mercados(
         configuracoes,
         data_execucao=data_execucao,
     )
 
     logger.info("Salvando %s registros de mercado em %s", len(dados), caminho_saida)
-    return salvar_parquet(dados, caminho_saida)
+    return salvar_parquet(dados_com_metadados, caminho_saida)
+
+
+if __name__ == "__main__":
+    caminho = executar_ingestao_mercados()
+    print(caminho)
